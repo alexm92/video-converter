@@ -1,2 +1,2 @@
-video-convertor
+video-converter
 ===============

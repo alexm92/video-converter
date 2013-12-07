@@ -33,14 +33,14 @@ def try_to_possess(file_key):
 
 def update_progress(file_key, new_value):
     # modifica progresul in baza de date pentru video-ul curent
-    entry = db.get_item(initial_path="file_key")
+    entry = db.get_item(initial_path=file_key)
     entry['progress'] = new_value
     entry.partial_save()
 
 def db_set_final_path(file_key, final_path):
     # seteaza link-ul catre fisierul convertit 
     # ar trebui setat dupa ce acest fisier a fost urcat in s3
-    entry = db.get_item(initial_path="file_key")
+    entry = db.get_item(initial_path=file_key)
     entry['final_path'] = final_path
     entry.partial_save()
 
@@ -57,12 +57,13 @@ while True:
     current_message = queue.read()
     if make_check(current_message):
         print('Message read')
+        print(current_message.get_body())
         file_data = simplejson.loads(current_message.get_body())
 
         file_key = file_data['path']
         file_name = get_file_name(file_key)
         file_dir = get_file_dir(file_key)
-
+        print(file_key)
         if try_to_possess(file_key):
             if not os.path.exists('{0}/{1}'.format(os.getcwd(), file_name)):
                 print('Preparing to download the file')
@@ -70,10 +71,11 @@ while True:
                 s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name))
                 elapsed_time = time() - start_time
                 print('Download complete. It took {0}'.format(elapsed_time))
+                update_progress(file_key, 10)
                 queue.delete_message(current_message)
 
-                cmd_rez_width = file_data['width']
-                cmd_red_height = file_data['height']
+                cmd_rez_width = str(file_data['width'])
+                cmd_red_height = str(file_data['height'])
                 cmd_gray = file_data['gray']
 
                 if cmd_gray == 'false':
@@ -86,7 +88,7 @@ while True:
                 os.system('ffmpeg {0}'.format(cmd_str))
                 elapsed_time = time() - start_time
                 print('FFMPEG complete. It took {0}'.format(elapsed_time))
-
+                update_progress(file_key, 80)
                 print('Now uploading')
                 start_time = time()
                 upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))

@@ -7,7 +7,7 @@ from time import time, sleep
 from subprocess import call
 import simplejson
 import json
-import os
+import os, pexpect
 
 def make_check(current_message):
     return current_message is not None
@@ -34,8 +34,10 @@ def try_to_possess(file_key):
 def update_progress(file_key, new_value):
     # modifica progresul in baza de date pentru video-ul curent
     entry = db.get_item(initial_path=file_key)
-    entry['progress'] = new_value
-    entry.partial_save()
+    if new_value != entry['progress']:
+        entry['progress'] = new_value
+        print (entry['progress'])
+        entry.partial_save()
 
 def db_set_final_path(file_key, final_path):
     # seteaza link-ul catre fisierul convertit 
@@ -43,6 +45,44 @@ def db_set_final_path(file_key, final_path):
     entry = db.get_item(initial_path=file_key)
     entry['final_path'] = final_path
     entry.partial_save()
+
+def convert(command):
+    thread = pexpect.spawn(command)
+    #print ("started %s" % cmd)
+    cpl = thread.compile_pattern_list([
+        pexpect.EOF,
+        'time=([^ ]+)'
+    ])
+    seconds = 0
+    while True:
+        if seconds == 0:
+            i = thread.expect([pexpect.EOF, 'Duration:([^,]+)'])
+            if i == 0: # EOF
+                #print ("the sub process exited")
+                break
+            elif i == 1:
+                duration_text = thread.match.group(1)[1:]
+                #print(duration_text)
+                ar_of_dur = duration_text.split('.')[0][-8:].split(':')
+                #print(ar_of_dur)
+                seconds = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
+                #print ("0%")
+        else:
+            i = thread.expect_list(cpl, timeout=None)
+            if i == 0: # EOF
+                #print ("the sub process exited")
+                break
+            elif i == 1:
+                time_text = thread.match.group(1)
+                #print(time_text)
+                ar_of_dur = time_text.split('.')[0][-8:].split(':')
+                #print(ar_of_dur)
+                passed = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
+                #print ("processing {0} of {1} seconds".format(passed,seconds))
+                percent = passed * 80 / seconds + 10
+                #print '{0}'.format(percent)
+                update_progress(file_key, percent)
+    thread.close()
 
 region_queue = sqs.connect_to_region('eu-west-1')
 queue = region_queue.get_queue('video-converter-sqs')
@@ -83,12 +123,11 @@ while True:
                 else:
                     cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
 
-                print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
+                #print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
                 start_time = time()
-                os.system('ffmpeg {0}'.format(cmd_str))
+                convert('ffmpeg {0}'.format(cmd_str))
                 elapsed_time = time() - start_time
                 print('FFMPEG complete. It took {0}'.format(elapsed_time))
-                update_progress(file_key, 80)
                 print('Now uploading')
                 start_time = time()
                 upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))

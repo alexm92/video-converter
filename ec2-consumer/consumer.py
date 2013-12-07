@@ -1,6 +1,7 @@
 #!/usr/bin/python -u 
 
-from boto import sqs, s3
+from boto import sqs, s3, dynamodb2
+from boto.dynamodb2.table import Table
 from sys import stdin, stdout
 from time import time, sleep
 from subprocess import call
@@ -17,10 +18,38 @@ def get_file_name(file_key):
 def get_file_dir(file_key):
     return '/'.join(file_key.split('/')[:-1])
 
+def try_to_possess(file_key):
+    #Creeaza o noua intrare in baza de date
+    #Daca exista deja intoarce False
+    try:
+        db.put_item(data = {
+            'initial_path' : file_key,
+            'progress' : 0,
+            'final_path' : ''
+            })
+        return True
+    except:
+        return False
+
+def update_progress(file_key, new_value):
+    # modifica progresul in baza de date pentru video-ul curent
+    entry = db.get_item(initial_path="file_key")
+    entry['progress'] = new_value
+    entry.partial_save()
+
+def db_set_final_path(file_key, final_path):
+    # seteaza link-ul catre fisierul convertit 
+    # ar trebui setat dupa ce acest fisier a fost urcat in s3
+    entry = db.get_item(initial_path="file_key")
+    entry['final_path'] = final_path
+    entry.partial_save()
+
 region_queue = sqs.connect_to_region('eu-west-1')
 queue = region_queue.get_queue('video-converter-sqs')
 region_s3 = s3.connect_to_region('eu-west-1')
 s3 = region_s3.get_bucket('video-converter-s3')
+region_db = dynamodb2.connect_to_region("eu-west-1") 
+db = Table("video-converter", connection=region_db)
 
 while True:
     sleep(0.5)
@@ -34,38 +63,41 @@ while True:
         file_name = get_file_name(file_key)
         file_dir = get_file_dir(file_key)
 
-        if not os.path.exists('{0}/{1}'.format(os.getcwd(), file_name)):
-            print('Preparing to download the file')
-            start_time = time()
-            s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name))
-            elapsed_time = time() - start_time
-            print('Download complete. It took {0}'.format(elapsed_time))
-            queue.delete_message(current_message)
+        if try_to_possess(file_key):
+            if not os.path.exists('{0}/{1}'.format(os.getcwd(), file_name)):
+                print('Preparing to download the file')
+                start_time = time()
+                s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name))
+                elapsed_time = time() - start_time
+                print('Download complete. It took {0}'.format(elapsed_time))
+                queue.delete_message(current_message)
 
-            cmd_rez_width = file_data['width']
-            cmd_red_height = file_data['height']
-            cmd_gray = file_data['gray']
+                cmd_rez_width = file_data['width']
+                cmd_red_height = file_data['height']
+                cmd_gray = file_data['gray']
 
-            if cmd_gray == 'false':
-                cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
-            else:
-                cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
+                if cmd_gray == 'false':
+                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
+                else:
+                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
 
-            print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
-            start_time = time()
-            os.system('ffmpeg {0}'.format(cmd_str))
-            elapsed_time = time() - start_time
-            print('FFMPEG complete. It took {0}'.format(elapsed_time))
+                print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
+                start_time = time()
+                os.system('ffmpeg {0}'.format(cmd_str))
+                elapsed_time = time() - start_time
+                print('FFMPEG complete. It took {0}'.format(elapsed_time))
 
-            print('Now uploading')
-            start_time = time()
-            upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
-            upload_key.set_contents_from_filename('changed_{0}'.format(file_name))
-            upload_key.make_public()
-            elapsed_time = time() - start_time
-            print('Upload complete. It took {0}'.format(elapsed_time))
-
-            os.remove('changed_{0}'.format(file_name))
-            os.remove('{0}'.format(file_name))
+                print('Now uploading')
+                start_time = time()
+                upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
+                upload_key.set_contents_from_filename('changed_{0}'.format(file_name))
+                upload_key.make_public()
+                elapsed_time = time() - start_time
+                print('Upload complete. It took {0}'.format(elapsed_time))
+                update_progress(file_key, 100)
+                db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
+                
+                os.remove('changed_{0}'.format(file_name))
+                os.remove('{0}'.format(file_name))
     else:
         print('No message to read :(')

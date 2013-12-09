@@ -9,6 +9,14 @@ import simplejson
 import json
 import os, pexpect
 
+def update_progress_on_download(done, total):
+    value = done * 10 / total
+    update_progress(global_file_key, value)
+
+def update_progress_on_upload(done, total):
+    value = done * 10 / total + 90
+    update_progress(global_file_key, value)
+
 def make_check(current_message):
     return current_message is not None
 
@@ -117,14 +125,15 @@ while True:
         file_data = simplejson.loads(current_message.get_body())
 
         file_key = file_data['path']
+        global_file_key = file_key
         file_name = get_file_name(file_key)
         file_dir = get_file_dir(file_key)
         print(file_key)
-        if try_to_possess(file_key):
-            if not os.path.exists('{0}/{1}'.format(os.getcwd(), file_name)):
+        if not os.path.exists('{0}/{1}'.format(os.getcwd(), file_name)):
+            if try_to_possess(file_key):
                 print('Preparing to download the file')
                 start_time = time()
-                s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name))
+                s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name), cb = update_progress_on_download)
                 elapsed_time = time() - start_time
                 print('Download complete. It took {0}'.format(elapsed_time))
                 update_progress(file_key, 10)
@@ -147,15 +156,21 @@ while True:
                 print('Now uploading')
                 start_time = time()
                 upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
-                upload_key.set_contents_from_filename('changed_{0}'.format(file_name))
+                upload_key.set_contents_from_filename('changed_{0}'.format(file_name), cb=update_progress_on_upload)
                 upload_key.make_public()
                 elapsed_time = time() - start_time
                 print('Upload complete. It took {0}'.format(elapsed_time))
                 db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
                 db_s3_set_url(file_key, upload_key)
                 update_progress(file_key, 100)
-                
-                os.remove('changed_{0}'.format(file_name))
-                os.remove('{0}'.format(file_name))
+            else:
+                print("Someone else is taking care of this")
+        else:
+            print("Fisierele deja exista")
+        try:
+            os.remove('{0}'.format(file_name))        
+            os.remove('changed_{0}'.format(file_name))
+        except:
+            pass
     else:
         print('No message to read :(')

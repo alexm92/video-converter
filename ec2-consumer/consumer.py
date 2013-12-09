@@ -25,7 +25,8 @@ def try_to_possess(file_key):
         db.put_item(data = {
             'initial_path' : file_key,
             'progress' : 0,
-            'final_path' : ''
+            'final_path' : '',
+            'url' : ''
             })
         return True
     except:
@@ -46,6 +47,14 @@ def db_set_final_path(file_key, final_path):
     entry['final_path'] = final_path
     entry.partial_save()
 
+def db_s3_set_url(file_key, upload_key):
+    # obtine de la s3 un url pentru fisierul respectiv
+    # pune acel url in baza de date la campul url
+    entry = db.get_item(initial_path=file_key)
+    entry['url'] = upload_key.generate_url(expires_in=0, query_auth=False)
+    entry.partial_save()
+
+
 def convert(command):
     thread = pexpect.spawn(command)
     #print ("started %s" % cmd)
@@ -56,17 +65,20 @@ def convert(command):
     seconds = 0
     while True:
         if seconds == 0:
-            i = thread.expect([pexpect.EOF, 'Duration:([^,]+)'])
-            if i == 0: # EOF
-                #print ("the sub process exited")
-                break
-            elif i == 1:
-                duration_text = thread.match.group(1)[1:]
-                #print(duration_text)
-                ar_of_dur = duration_text.split('.')[0][-8:].split(':')
-                #print(ar_of_dur)
-                seconds = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
-                #print ("0%")
+            try:
+                i = thread.expect([pexpect.EOF, 'Duration:([^,]+)'])
+                if i == 0: # EOF
+                    #print ("the sub process exited")
+                    break
+                elif i == 1:
+                    duration_text = thread.match.group(1)[1:]
+                    #print(duration_text)
+                    ar_of_dur = duration_text.split('.')[0][-8:].split(':')
+                    #print(ar_of_dur)
+                    seconds = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
+                    #print ("0%")
+            except:
+                print("ceva naspa cu secundele; incerc iar")
         else:
             i = thread.expect_list(cpl, timeout=None)
             if i == 0: # EOF
@@ -135,8 +147,9 @@ while True:
                 upload_key.make_public()
                 elapsed_time = time() - start_time
                 print('Upload complete. It took {0}'.format(elapsed_time))
-                update_progress(file_key, 100)
                 db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
+                db_s3_set_url(file_key, upload_key)
+                update_progress(file_key, 100)
                 
                 os.remove('changed_{0}'.format(file_name))
                 os.remove('{0}'.format(file_name))

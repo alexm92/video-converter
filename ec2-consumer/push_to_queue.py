@@ -14,9 +14,9 @@ Acesta este un exemplu
 
 vals = {
 	'path' : 'videos/test2.mkv',
-	'width' : 432,
-	'height' : 320,
-	'gray' : False
+	'width' : '432',
+	'height' : '320',
+	'gray' : 'false'
 }
 
 m = JSONMessage()

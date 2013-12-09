@@ -60,25 +60,29 @@ def convert(command):
     #print ("started %s" % cmd)
     cpl = thread.compile_pattern_list([
         pexpect.EOF,
-        'time=([^ ]+)'
+        'time=([^\.]+)'
     ])
     seconds = 0
     while True:
         if seconds == 0:
             try:
-                i = thread.expect([pexpect.EOF, 'Duration:([^,]+)'])
+                i = thread.expect([pexpect.EOF, 'Duration:.+([0123456789:]{8})\.'])
                 if i == 0: # EOF
                     #print ("the sub process exited")
                     break
                 elif i == 1:
-                    duration_text = thread.match.group(1)[1:]
+                    duration_text = thread.match.group(1)
+                    #print(thread)
+                    #print(thread.match)
+                    #print(thread.match.group(1))
                     #print(duration_text)
-                    ar_of_dur = duration_text.split('.')[0][-8:].split(':')
-                    #print(ar_of_dur)
+                    ar_of_dur = duration_text.split(':')
+                    print(ar_of_dur)
                     seconds = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
                     #print ("0%")
-            except:
+            except Exception,e:
                 print("ceva naspa cu secundele; incerc iar")
+                print(e)
         else:
             i = thread.expect_list(cpl, timeout=None)
             if i == 0: # EOF
@@ -87,7 +91,7 @@ def convert(command):
             elif i == 1:
                 time_text = thread.match.group(1)
                 #print(time_text)
-                ar_of_dur = time_text.split('.')[0][-8:].split(':')
+                ar_of_dur = time_text.split(':')
                 #print(ar_of_dur)
                 passed = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
                 #print ("processing {0} of {1} seconds".format(passed,seconds))

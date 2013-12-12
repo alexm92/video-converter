@@ -16,7 +16,8 @@
     <div class="carousel-inner">
         <div class="item active">
             <img src="http://shareitfitness.files.wordpress.com/2010/12/300_movie_2.jpg" alt="Sparta!!!" />
-            <div class="carousel-caption"></div>
+            <div class="carousel-caption">
+                           </div>
         </div>
         <div class="item">
             <img src="http://downloadwallpaperhd.com/wp-content/uploads/2013/04/The-Lone-Ranger-Movie-2013-HD-Wallpaper.jpg" alt="smth" />
@@ -34,5 +35,61 @@
         <span class="glyphicon glyphicon-chevron-right"></span>
     </a>
 </div>
+
+<button id="btn_upload" class="btn btn-success btn-lg" data-toggle="modal" data-target="#myModal">
+    Upload your video
+</button>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Upload your file</h4>
+            </div>
+            <div class="modal-body">
+                <input type="file" id="file" onchange="s3_upload();"/> <br />
+
+                <div class="progress progress-striped active">
+                  <div class="progress-bar upload" style="width: 0%">
+                    <span class="sr-only">0% Complete (upload)</span>
+                  </div>
+                  <div class="progress-bar progress-bar-success convert" style="width: 0%">
+                    <span class="sr-only">0% Complete (convert)</span>
+                  </div>
+                </div> 
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script type="text/javascript" src="/static/js/lodash.js"></script>
+<script type="text/javascript" src="/static/js/s3upload.js"></script>
+<script type="text/javascript">
+
+    function s3_upload(){
+        var s3upload = new S3Upload({
+            file_dom_selector: 'file',
+            s3_sign_put_url: '/upload/',
+
+            onProgress: function(percent, message) {
+                $('.upload').css('width', (percent * 1.0 / 2) + '%');
+                $('.upload .sr-only').html(percent + '% Complete (upload)');
+            },
+            onFinishS3Put: function(url) {
+                console.log('Upload completed. Uploaded to: '+ url);
+            },
+            onError: function(status) {
+                console.log('Upload error: ' + status);
+            }
+        });
+    }
+
+</script>
 
 {% endblock %}

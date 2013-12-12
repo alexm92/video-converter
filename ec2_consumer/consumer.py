@@ -48,6 +48,11 @@ def update_progress(file_key, new_value):
         print (entry['progress'])
         entry.partial_save()
 
+def db_delete_progress(file_key):
+    #inlatura din baza de date ce am facut pana acum
+    entry = db.get_item(initial_path=file_key)
+    entry.delete()
+
 def db_set_final_path(file_key, final_path):
     # seteaza link-ul catre fisierul convertit 
     # ar trebui setat dupa ce acest fisier a fost urcat in s3
@@ -126,39 +131,44 @@ while True:
         print(file_key)
         if not os.path.exists('{0}/{1}'.format(os.getcwd(), file_name)):
             if try_to_possess(file_key):
-                print('Preparing to download the file')
-                start_time = time()
-                queue.delete_message(current_message)
-                s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name), cb = update_progress_on_download)
-                elapsed_time = time() - start_time
-                print('Download complete. It took {0}'.format(elapsed_time))
-                update_progress(file_key, 10)
+                try:
+                    print('Preparing to download the file')
+                    start_time = time()
+                    queue.delete_message(current_message)
+                    s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name), cb = update_progress_on_download)
+                    elapsed_time = time() - start_time
+                    print('Download complete. It took {0}'.format(elapsed_time))
+                    update_progress(file_key, 10)
 
-                cmd_rez_width = str(file_data['width'])
-                cmd_red_height = str(file_data['height'])
-                cmd_gray = file_data['gray']
-                print (cmd_gray)
-                if not cmd_gray:
-                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
-                else:
-                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
+                    cmd_rez_width = str(file_data['width'])
+                    cmd_red_height = str(file_data['height'])
+                    cmd_gray = file_data['gray']
+                    print (cmd_gray)
+                    if not cmd_gray:
+                        cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
+                    else:
+                        cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
 
-                #print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
-                start_time = time()
-                convert('ffmpeg {0}'.format(cmd_str))
-                elapsed_time = time() - start_time
-                print('FFMPEG complete. It took {0}'.format(elapsed_time))
-                print('Now uploading')
-                start_time = time()
-                upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
-                upload_key.set_contents_from_filename('changed_{0}'.format(file_name), cb=update_progress_on_upload)
-                upload_key.make_public()
-                elapsed_time = time() - start_time
-                print('Upload complete. It took {0}'.format(elapsed_time))
-                db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
-                db_s3_set_url(file_key, upload_key)
-                update_progress(file_key, 100)
-                last_processing_time = time()
+                    #print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
+                    start_time = time()
+                    convert('ffmpeg {0}'.format(cmd_str))
+                    elapsed_time = time() - start_time
+                    print('FFMPEG complete. It took {0}'.format(elapsed_time))
+                    print('Now uploading')
+                    start_time = time()
+                    upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
+                    upload_key.set_contents_from_filename('changed_{0}'.format(file_name), cb=update_progress_on_upload)
+                    upload_key.make_public()
+                    elapsed_time = time() - start_time
+                    print('Upload complete. It took {0}'.format(elapsed_time))
+                    db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
+                    db_s3_set_url(file_key, upload_key)
+                    update_progress(file_key, 100)
+                    last_processing_time = time()
+                except:
+                    print("S-a intamplat ceva de cacao")
+                    db_delete_progress(file_key)
+
             else:
                 print("Someone else is taking care of this")
         else:

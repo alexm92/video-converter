@@ -16,3 +16,9 @@
     max-width: none;
 }
 
+#btn_upload {
+    position: absolute;
+    z-index: 100;
+    top: 50%;
+    left: 43%;
+}

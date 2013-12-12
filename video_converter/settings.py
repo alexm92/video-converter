@@ -1,3 +1,5 @@
+from settings_private import *
+
 """
 Django settings for video_converter project.
 
@@ -100,3 +102,4 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
 )
+

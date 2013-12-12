@@ -180,7 +180,7 @@ while True:
     else:
         machine_duration = time() - machine_start_time
         stand_by_duration = time() - last_processing_time
-        if 10 < machine_duration % 3000 and stand_by_duration > 10 :
+        if 10 < machine_duration % 3000 and stand_by_duration > 600 :
             break
         print('No message to read :(')
 

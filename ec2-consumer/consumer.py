@@ -115,6 +115,10 @@ s3 = region_s3.get_bucket('video-converter-s3')
 region_db = dynamodb2.connect_to_region("eu-west-1") 
 db = Table("video-converter", connection=region_db)
 
+machine_start_time = time()
+machine_no_messages = 0
+last_processing_time = time()
+
 while True:
     sleep(0.5)
 
@@ -172,5 +176,11 @@ while True:
             os.remove('changed_{0}'.format(file_name))
         except:
             pass
+        last_processing_time = time()
     else:
+        machine_duration = time() - machine_start_time
+        stand_by_duration = time() - last_processing_time
+        if 10 < machine_duration % 3000 and stand_by_duration > 10 :
+            break
         print('No message to read :(')
+

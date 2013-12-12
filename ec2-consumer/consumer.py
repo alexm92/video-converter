@@ -146,11 +146,11 @@ while True:
                 cmd_rez_width = str(file_data['width'])
                 cmd_red_height = str(file_data['height'])
                 cmd_gray = file_data['gray']
-
+                print (cmd_gray)
                 if cmd_gray == 'false':
-                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
+                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 -threads 32 changed_' + file_name
                 else:
-                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
+                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 -threads 32 changed_' + file_name
 
                 #print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
                 start_time = time()
@@ -167,6 +167,7 @@ while True:
                 db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
                 db_s3_set_url(file_key, upload_key)
                 update_progress(file_key, 100)
+                last_processing_time = time()
             else:
                 print("Someone else is taking care of this")
         else:
@@ -176,11 +177,10 @@ while True:
             os.remove('changed_{0}'.format(file_name))
         except:
             pass
-        last_processing_time = time()
     else:
         machine_duration = time() - machine_start_time
         stand_by_duration = time() - last_processing_time
-        if 10 < machine_duration % 3000 and stand_by_duration > 600 :
+        if 3400 < machine_duration % 3600 and stand_by_duration > 600 :
             break
         print('No message to read :(')
 

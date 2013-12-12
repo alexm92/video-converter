@@ -83,6 +83,15 @@
             },
             onFinishS3Put: function(url) {
                 console.log('Upload completed. Uploaded to: '+ url);
+
+                $.ajax({
+                    url: '/api/convert/',
+                    data: {path: url, width: 100, height: 100, gray: false},
+                    beforeSend: function () { console.log('start converting'); },
+                    success: function () { console.log('convert. success'); },
+                    error: function () { console.log('convert. error'); },
+                });
+
             },
             onError: function(status) {
                 console.log('Upload error: ' + status);

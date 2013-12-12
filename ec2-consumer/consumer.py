@@ -80,14 +80,9 @@ def convert(command):
                     break
                 elif i == 1:
                     duration_text = thread.match.group(1)
-                    #print(thread)
-                    #print(thread.match)
-                    #print(thread.match.group(1))
-                    #print(duration_text)
                     ar_of_dur = duration_text.split(':')
                     print(ar_of_dur)
                     seconds = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
-                    #print ("0%")
             except Exception,e:
                 print("ceva naspa cu secundele; incerc iar")
                 print(e)
@@ -98,13 +93,9 @@ def convert(command):
                 break
             elif i == 1:
                 time_text = thread.match.group(1)
-                #print(time_text)
                 ar_of_dur = time_text.split(':')
-                #print(ar_of_dur)
                 passed = int(ar_of_dur[2]) + 60*int(ar_of_dur[1]) + 3600*int(ar_of_dur[0])
-                #print ("processing {0} of {1} seconds".format(passed,seconds))
                 percent = passed * 80 / seconds + 10
-                #print '{0}'.format(percent)
                 update_progress(file_key, percent)
     thread.close()
 
@@ -137,20 +128,20 @@ while True:
             if try_to_possess(file_key):
                 print('Preparing to download the file')
                 start_time = time()
+                queue.delete_message(current_message)
                 s3.get_key(file_key).get_contents_to_filename('{0}/{1}'.format(os.getcwd(), file_name), cb = update_progress_on_download)
                 elapsed_time = time() - start_time
                 print('Download complete. It took {0}'.format(elapsed_time))
                 update_progress(file_key, 10)
-                queue.delete_message(current_message)
 
                 cmd_rez_width = str(file_data['width'])
                 cmd_red_height = str(file_data['height'])
                 cmd_gray = file_data['gray']
                 print (cmd_gray)
-                if cmd_gray == 'false':
-                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 -threads 32 changed_' + file_name
+                if not cmd_gray:
+                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
                 else:
-                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 -threads 32 changed_' + file_name
+                    cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
 
                 #print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
                 start_time = time()
@@ -180,7 +171,7 @@ while True:
     else:
         machine_duration = time() - machine_start_time
         stand_by_duration = time() - last_processing_time
-        if 3400 < machine_duration % 3600 and stand_by_duration > 600 :
+        if 3300 < (machine_duration + 120) % 3600 and stand_by_duration > 600 :
             break
         print('No message to read :(')
 

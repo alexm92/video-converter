@@ -160,6 +160,7 @@ while True:
                     start_time = time()
                     #upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
                     upload_key = s3.new_key('changed_{0}'.format(file_name))
+                    upload_key.metadata = {'Content-Disposition' : 'attachment'}
                     upload_key.set_contents_from_filename('changed_{0}'.format(file_name), cb=update_progress_on_upload)
                     upload_key.make_public()
                     elapsed_time = time() - start_time

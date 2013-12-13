@@ -83,6 +83,10 @@ function setUploadButtonWhenReady(){
                 // show next tab
                 $('.nav a:eq(1)').tab('show');
 
+                $('.form-horizontal').show();
+                $('.progress').hide();
+                $('#btn_convert').show();
+
                 // add to SQQ and start converting
                 $('#btn_convert').click(function () {
                     startConverting(response);
@@ -102,8 +106,8 @@ function startConverting(response) {
             gray: $('#ck_grayscale').is(':checked')
         },
         success: function () {
-            $('.form-horizontal').toggle();
-            $('.progress').toggleClass('hide');
+            $('.form-horizontal').hide();
+            $('.progress').show();
             $('#btn_convert').hide();
             startPollingForProgress(response.tempLink);
         },

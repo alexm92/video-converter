@@ -29,7 +29,6 @@ def upload(request):
         signature = sign(AWS_SECRET_KEY, policy)
         return_dict['policy'] = policy
         return_dict['signature'] = base64.b64encode(signature)
-        print return_dict
     
     return HttpResponse(json.dumps(return_dict), content_type="application/json")
  

@@ -36,7 +36,7 @@ function setUploadButtonWhenReady(){
 
             // optional feature
             chunking: {
-                enabled: true
+                enabled: false
             },
 
             // optional feature

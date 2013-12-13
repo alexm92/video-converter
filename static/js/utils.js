@@ -81,7 +81,7 @@ function setUploadButtonWhenReady(){
                 $viewBtn.attr("href", response.tempLink);
 
                 // show next tab
-                $('.nav a:eq(1)').show('show');
+                $('.nav a:eq(1)').tab('show');
 
                 // add to SQQ and start converting
                 $('#btn_convert').click(function () {
@@ -102,7 +102,10 @@ function startConverting(response) {
             gray: $('#ck_grayscale').is(':checked')
         },
         success: function () {
-            //...
+            $('.form-horizontal').toggle();
+            $('.progress').toggleClass('hide');
+            $('#btn_convert').hide();
+            startPollingForProgress(response.tempLink);
         },
         error: function () {
             alert('error')
@@ -124,7 +127,7 @@ function download(filename) {
     });
 }
 
-function startPollingForProgres(ajax_url){
+function startPollingForProgress(ajax_url){
     var seconds = 1;
     polling_setInterval = setInterval(function(){
         $.ajax({
@@ -137,7 +140,8 @@ function startPollingForProgres(ajax_url){
                     clearInterval(polling_setInterval);
                     download(ajax_url);
                 }
-            }
+            },
+            error: function () { alert('progress error') }
         })
     }, 1 * 1000);
 }

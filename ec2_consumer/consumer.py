@@ -21,10 +21,12 @@ def make_check(current_message):
     return current_message is not None
 
 def get_file_name(file_key):
-    return file_key.split('/')[-1]
+    #return file_key.split('/')[-1]
+    return file_key
 
 def get_file_dir(file_key):
-    return '/'.join(file_key.split('/')[:-1])
+    #return '/'.join(file_key.split('/')[:-1])
+    return ""
 
 def try_to_possess(file_key):
     #Creeaza o noua intrare in baza de date
@@ -156,12 +158,14 @@ while True:
                     print('FFMPEG complete. It took {0}'.format(elapsed_time))
                     print('Now uploading')
                     start_time = time()
-                    upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
+                    #upload_key = s3.new_key('{0}/changed_{1}'.format(file_dir, file_name))
+                    upload_key = s3.new_key('{0}'.format(file_name))
                     upload_key.set_contents_from_filename('changed_{0}'.format(file_name), cb=update_progress_on_upload)
                     upload_key.make_public()
                     elapsed_time = time() - start_time
                     print('Upload complete. It took {0}'.format(elapsed_time))
-                    db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
+                    #db_set_final_path(file_key, '{0}/changed_{1}'.format(file_dir, file_name))
+                    db_set_final_path(file_key, 'changed_{0}'.format(file_name))
                     db_s3_set_url(file_key, upload_key)
                     update_progress(file_key, 100)
                     last_processing_time = time()

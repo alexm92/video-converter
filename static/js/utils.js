@@ -1,7 +1,6 @@
 function setUploadButtonWhenReady(){
     $(document).ready(function () {
         $('#fineuploader-s3').fineUploaderS3({
-            debug: true,
             retry: {
                 enableAuto: true // defaults to false
             },
@@ -77,6 +76,8 @@ function setUploadButtonWhenReady(){
                 if (response.success) {
                     $viewBtn.show();
                     response.tempLink = $(this).fineUploaderS3('getKey', id);
+                    console.log(this);
+                    console.log($(this));
                     $viewBtn.attr("href", response.tempLink);
 
                     $.ajax({

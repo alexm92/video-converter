@@ -1,6 +1,11 @@
 function setUploadButtonWhenReady(){
     $(document).ready(function () {
         $('#fineuploader-s3').fineUploaderS3({
+            debug: true,
+            retry: {
+                enableAuto: true // defaults to false
+            },
+
             request: {
                 // REQUIRED: We are using a custom domain
                 // for our S3 bucket, in this case.  You can
@@ -71,6 +76,7 @@ function setUploadButtonWhenReady(){
 
                 if (response.success) {
                     $viewBtn.show();
+                    response.tempLink = $(this).fineUploaderS3('getKey', id);
                     $viewBtn.attr("href", response.tempLink);
                 }
             });

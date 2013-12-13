@@ -38,8 +38,8 @@ def convert(request):
     return_dict = {}
     if request.GET:
         path = request.GET.get('path', '').split('/')[-1]
-        width = int(request.GET.get('width', '0'))
-        height = int(request.GET.get('height', '0'))
+        width = int(request.GET.get('width', '100'))
+        height = int(request.GET.get('height', '100'))
         gray = request.GET.get('gray', 'false') == 'true'
 
         # SQS push
@@ -53,7 +53,7 @@ def progress(request):
     if request.GET:
         path = request.GET.get('path', '').split('/')[-1]
 
-        return_dict['progress'] = api.check_progress(path)
+        return_dict['progress'] = float(api.check_progress(path))
     return HttpResponse(json.dumps(return_dict), content_type="application/json")
 
 ## Returns for an S3 path the URL of the converted video

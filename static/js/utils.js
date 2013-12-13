@@ -94,3 +94,21 @@ function setUploadButtonWhenReady(){
             });
     });
 }
+
+function startPollingForProgres(ajax_url){
+    var seconds = 1;
+    polling_setInterval = setInterval(function(){
+        $.ajax({
+            url: '/api/progress',
+            data: {'path' : ajax_url},
+            success: function(data) {
+                $('#convert-bar').css('width', data['progress'] + '%');
+                $('.sr-only').html(data['progress'] + '% Complete (convert)');
+                if (data['progress'] == '100'){
+                    clearInterval(polling_setInterval);
+                    download(ajax_url);
+                }
+            }
+        })
+    }, 1 * 1000);
+}

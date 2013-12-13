@@ -1,8 +1,15 @@
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.conf import settings
-import time, os, json, base64, urllib, hmac, sha
+from django.views.decorators.csrf import csrf_exempt
+import time, os, json, base64, urllib, hmac, sha, hashlib
 import ec2_consumer.video_converter_api as api
+
+def sign(key, msg):
+  return hmac.new(key, msg.encode('utf-8'), sha).digest()
+
+def blankIE9(request):
+    return HttpResponse()
 
 def home(request):
     return_dict = {}
@@ -10,14 +17,14 @@ def home(request):
     c = RequestContext(request, return_dict)
     return HttpResponse(t.render(c))
 
+@csrf_exempt
 def upload(request):
     return_dict = {}
+    AWS_ACCESS_KEY = settings.AWS_ACCESS_KEY_ID
+    AWS_SECRET_KEY = settings.AWS_SECRET_ACCESS_KEY
+    S3_BUCKET = settings.AWS_STORAGE_BUCKET_NAME
 
     if request.GET:
-        AWS_ACCESS_KEY = settings.AWS_ACCESS_KEY_ID
-        AWS_SECRET_KEY = settings.AWS_SECRET_ACCESS_KEY
-        S3_BUCKET = settings.AWS_STORAGE_BUCKET_NAME
-
         object_name = 'videos/%s-%s' % (request.GET.get('s3_object_name'), time.time())
         mime_type = request.GET.get('s3_object_type')
 
@@ -33,7 +40,18 @@ def upload(request):
 
         return_dict['signed_request'] = '%s?AWSAccessKeyId=%s&Expires=%d&Signature=%s' % (url, AWS_ACCESS_KEY, expires, signature)
         return_dict['url'] = url
+    
+    if request.method == 'POST':
+        policy = base64.b64encode(request.body)
+        signature = sign(AWS_SECRET_KEY, policy)
+        return_dict['policy'] = policy
+        return_dict['signature'] = base64.b64encode(signature)
+        print return_dict
+    
     return HttpResponse(json.dumps(return_dict), content_type="application/json")
+
+     
+        
 
 ## Init convert
 def convert(request):

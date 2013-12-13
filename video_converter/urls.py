@@ -13,6 +13,9 @@ urlpatterns = patterns('',
 
     url(r'^upload/$', 'video_converter.views.upload'),
     url(r'^s3direct/', include('s3direct.urls')),
+    
+    ## Blank page for IE9
+    url(r'^blankIE9/', 'video_converter.views.blankIE9'),
 
     ## api urls
     url(r'^api/convert/$', 'video_converter.views.convert'),

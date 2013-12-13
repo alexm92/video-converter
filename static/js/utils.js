@@ -55,7 +55,7 @@ function setUploadButtonWhenReady(){
                 endpoint: "/upload/"
             },
 
-            // optional feature
+                // optional feature
             validation: {
                 itemLimit: 5,
                 sizeLimit: 2147483648
@@ -66,31 +66,61 @@ function setUploadButtonWhenReady(){
                     notAvailablePath: "/static/img/not_available-generic.png",
                     waitingPath: "/static/img/waiting-generic.png"
                 }
+        }
+    })
+        // Enable the "view" link in the UI that allows the file to be downloaded/viewed
+        .on('complete', function(event, id, name, response) {
+            var $fileEl = $(this).fineUploaderS3("getItemByFileId", id),
+                $viewBtn = $fileEl.find(".view-btn");
+
+            if (response.success) {
+                $viewBtn.show();
+                response.tempLink = $(this).fineUploaderS3('getKey', id);
+                console.log(this);
+                console.log($(this));
+                $viewBtn.attr("href", response.tempLink);
+
+                // show next tab
+                $('.nav a:eq(1)').show('show');
+
+                // add to SQQ and start converting
+                $('#btn_convert').click(function () {
+                    startConverting(response);
+                });
             }
-        })
-            // Enable the "view" link in the UI that allows the file to be downloaded/viewed
-            .on('complete', function(event, id, name, response) {
-                var $fileEl = $(this).fineUploaderS3("getItemByFileId", id),
-                    $viewBtn = $fileEl.find(".view-btn");
+        });
+});
+}
 
-                if (response.success) {
-                    $viewBtn.show();
-                    response.tempLink = $(this).fineUploaderS3('getKey', id);
-                    console.log(this);
-                    console.log($(this));
-                    $viewBtn.attr("href", response.tempLink);
-
-                    $.ajax({
-                        url: '/api/convert/',
-                        data: {path: response.tempLink},
-                        success: function () {
-                            $('.nav a:eq(1)').tab('show');
-                        },
-                        error: function () {
-                            alert('error')
-                        }
-                    });
-                }
-            });
+function startConverting(response) {
+    $.ajax({
+        url: '/api/convert/',
+        data: {
+            path: response.tempLink, 
+            width: $('#txt_width').val(), 
+            height: $('#txt_height').val(),
+            gray: $('#ck_grayscale').is(':checked')
+        },
+        success: function () {
+            //...
+        },
+        error: function () {
+            alert('error')
+        }
     });
 }
+
+function download(filename) {
+    $('.nav a:eq(2)').tab('show');
+    $.ajax({
+        url: '/api/get_url/',
+        data: {path: filename},
+        success: function (data) {
+             $('#btn_download').attr('href', data['url']);
+        },
+        error: function () {
+            alert('download error');
+        }
+    });
+}
+

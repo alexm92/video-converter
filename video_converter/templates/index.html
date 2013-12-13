@@ -94,7 +94,30 @@
                         <div id="fineuploader-s3"></div>
                     </div>
                     <div id="step-convert" class="tab-pane">
-                        Start converting
+                       <form class="form-horizontal" role="form">
+                          <div class="form-group">
+                            <label for="txt_width" class="col-sm-2 control-label">Width</label>
+                            <div class="col-sm-10">
+                              <input type="number" class="form-control" id="txt_width" min="100" value="100" required>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="txt_height" class="col-sm-2 control-label">Height</label>
+                            <div class="col-sm-10">
+                              <input type="number" class="form-control" id="txt_height" min="100" value="100" required>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                              <div class="checkbox">
+                                <label>
+                                  <input type="checkbox" id="ck_grayscale"> Grayscale
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                            <button type="button" id="btn_convert" class="btn btn-success pull-right">Convert now!</button><br />
+                        </form> 
                     </div>
                     <div id="step-download" class="tab-pane">
                         Download link
@@ -102,8 +125,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Hide</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->

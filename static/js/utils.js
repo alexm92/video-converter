@@ -83,9 +83,8 @@ function setUploadButtonWhenReady(){
                     $.ajax({
                         url: '/api/convert/',
                         data: {path: response.tempLink},
-                        beforeSend: function () { $('.nav a:eq(1)').tab('show'); },
                         success: function () {
-                            $('.nav a:eq(2)').tab('show');
+                            $('.nav a:eq(1)').tab('show');
                         },
                         error: function () {
                             alert('error')

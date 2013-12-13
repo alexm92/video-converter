@@ -84,7 +84,22 @@
                 <h4 class="modal-title">Upload your file</h4>
             </div>
             <div class="modal-body">
-                <div id="fineuploader-s3"></div>
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#step-upload" data-toggle="tab">Upload</a></li>
+                    <li><a href="#step-convert" data-toggle="tab">Convert</a></li>
+                    <li><a href="#step-download" data-toggle="tab">Download</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="step-upload" class="active tab-pane">
+                        <div id="fineuploader-s3"></div>
+                    </div>
+                    <div id="step-convert" class="tab-pane">
+                        Start converting
+                    </div>
+                    <div id="step-download" class="tab-pane">
+                        Download link
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

@@ -22,3 +22,7 @@
     top: 50%;
     left: 43%;
 }
+
+.tab-pane {
+    margin-top: 10px;
+}

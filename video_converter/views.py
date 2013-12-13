@@ -37,7 +37,7 @@ def upload(request):
 def convert(request):
     return_dict = {}
     if request.GET:
-        path = '/'.join(request.GET.get('path', '').split('/')[-2 : ])
+        path = request.GET.get('path', '').split('/')[-1]
         width = int(request.GET.get('width', '0'))
         height = int(request.GET.get('height', '0'))
         gray = request.GET.get('gray', 'false') == 'true'
@@ -51,7 +51,7 @@ def convert(request):
 def progress(request):
     return_dict = {'progress': 0}
     if request.GET:
-        path = '/'.join(request.GET.get('path', '').split('/')[-2 : ])
+        path = request.GET.get('path', '').split('/')[-1]
 
         return_dict['progress'] = api.check_progress(path)
     return HttpResponse(json.dumps(return_dict), content_type="application/json")

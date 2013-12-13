@@ -78,6 +78,18 @@ function setUploadButtonWhenReady(){
                     $viewBtn.show();
                     response.tempLink = $(this).fineUploaderS3('getKey', id);
                     $viewBtn.attr("href", response.tempLink);
+
+                    $.ajax({
+                        url: '/api/convert/',
+                        data: {path: response.tempLink},
+                        beforeSend: function () { $('.nav a:eq(1)').tab('show'); },
+                        success: function () {
+                            $('.nav a:eq(2)').tab('show');
+                        },
+                        error: function () {
+                            alert('error')
+                        }
+                    });
                 }
             });
     });

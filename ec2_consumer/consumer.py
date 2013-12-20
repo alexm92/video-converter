@@ -53,7 +53,7 @@ def update_progress(file_key, new_value):
 def db_delete_progress(file_key):
     #inlatura din baza de date ce am facut pana acum
     entry = db.get_item(initial_path=file_key)
-    entry.delete()
+    update_progress(file_key, -1)
 
 def db_set_final_path(file_key, final_path):
     # seteaza link-ul catre fisierul convertit 

@@ -79,12 +79,6 @@ function setUploadButtonWhenReady(){
                 $viewBtn = $fileEl.find(".view-btn");
 
             if (response.success) {
-                $viewBtn.show();
-                response.tempLink = $(this).fineUploaderS3('getKey', id);
-                console.log(this);
-                console.log($(this));
-                $viewBtn.attr("href", response.tempLink);
-
                 // show next tab
                 $('.nav a:eq(1)').tab('show');
 
@@ -148,12 +142,19 @@ function startPollingForProgress(ajax_url){
             url: '/api/progress',
             data: {'path' : ajax_url},
             success: function(data) {
-                $('#convert-bar').css('width', data['progress'] + '%');
-                $('.sr-only').html(data['progress'] + '% Complete (convert)');
                 if (data['progress'] == '100'){
                     clearInterval(polling_setInterval);
                     download(ajax_url);
                 }
+                if (data['progress'] == '-1'){
+                    clearInterval(polling_setInterval);
+                    $('.nav a:eq(0)').tab('show');
+                    alert("There was a problem with your file. Please try a different one.");
+                    data['progress'] = '0';    
+                }
+                $('#convert-bar').css('width', data['progress'] + '%');
+                $('.sr-only').html(data['progress'] + '% Complete (convert)');
+
             },
             error: function () {
                 alert('progress error');

@@ -1,3 +1,6 @@
+var converted_ids = {};
+var polling_setInterval;
+
 function setUploadButtonWhenReady(){
     $(document).ready(function () {
         $('#fineuploader-s3').fineUploaderS3({
@@ -55,10 +58,12 @@ function setUploadButtonWhenReady(){
                 endpoint: "/upload/"
             },
 
-                // optional feature
+            // optional feature
             validation: {
-                itemLimit: 5,
-                sizeLimit: 2147483648
+                itemLimit: 1,
+                sizeLimit: 2147483648,
+                acceptFiles: "video/*",
+                allowedExtensions: ["mp4", "avi", "mpeg", "mpg", "mkv", "mpeg"]
             },
 
             thumbnails: {
@@ -66,8 +71,8 @@ function setUploadButtonWhenReady(){
                     notAvailablePath: "/static/img/not_available-generic.png",
                     waitingPath: "/static/img/waiting-generic.png"
                 }
-        }
-    })
+            }
+        })
         // Enable the "view" link in the UI that allows the file to be downloaded/viewed
         .on('complete', function(event, id, name, response) {
             var $fileEl = $(this).fineUploaderS3("getItemByFileId", id),
@@ -87,13 +92,16 @@ function setUploadButtonWhenReady(){
                 $('.progress').hide();
                 $('#btn_convert').show();
 
-                // add to SQQ and start converting
+                // add to SQS and start converting
                 $('#btn_convert').click(function () {
-                    startConverting(response);
+                    if (typeof(converted_ids[id]) == "undefined"){
+                        converted_ids[id] = true;
+                        startConverting(response);
+                    }
                 });
             }
         });
-});
+    });
 }
 
 function startConverting(response) {
@@ -119,6 +127,8 @@ function startConverting(response) {
 
 function download(filename) {
     $('.nav a:eq(2)').tab('show');
+    $('#convert-bar').css('width', '0%');
+    $('.sr-only').html('0% Complete (convert)');
     $.ajax({
         url: '/api/get_url/',
         data: {path: filename},
@@ -145,7 +155,10 @@ function startPollingForProgress(ajax_url){
                     download(ajax_url);
                 }
             },
-            error: function () { alert('progress error') }
+            error: function () {
+                alert('progress error');
+                clearInterval(polling_setInterval);
+            }
         })
     }, 1 * 1000);
 }

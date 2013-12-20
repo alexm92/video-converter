@@ -63,7 +63,7 @@ function setUploadButtonWhenReady(){
                 itemLimit: 1,
                 sizeLimit: 2147483648,
                 acceptFiles: "video/*",
-                allowedExtensions: ["mp4", "avi", "mpeg", "mpg", "mkv", "mpeg", "png", "jpeg", "jpg", "bmp", "gif"]
+                allowedExtensions: ["mp4", "avi", "mpeg", "mpg", "mkv", "mpeg"]
             },
 
             thumbnails: {
@@ -79,6 +79,7 @@ function setUploadButtonWhenReady(){
                 $viewBtn = $fileEl.find(".view-btn");
 
             if (response.success) {
+                response.tempLink = $(this).fineUploaderS3('getKey', id); 
                 // show next tab
                 $('.nav a:eq(1)').tab('show');
 

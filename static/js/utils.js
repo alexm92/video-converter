@@ -63,7 +63,7 @@ function setUploadButtonWhenReady(){
                 itemLimit: 1,
                 sizeLimit: 2147483648,
                 acceptFiles: "video/*",
-                allowedExtensions: ["mp4", "avi", "mpeg", "mpg", "mkv", "mpeg"]
+                allowedExtensions: ["mp4", "avi", "mpeg", "mpg", "mkv", "mpeg", "png", "jpeg", "jpg", "bmp", "gif"]
             },
 
             thumbnails: {

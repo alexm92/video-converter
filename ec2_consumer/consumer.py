@@ -6,6 +6,7 @@ from sys import stdin, stdout
 from time import time, sleep
 from subprocess import call
 import simplejson
+import mimetypes
 import json
 import os, pexpect
 
@@ -146,11 +147,14 @@ while True:
                     cmd_red_height = str(file_data['height'])
                     cmd_gray = file_data['gray']
                     print (cmd_gray)
-                    if not cmd_gray:
-                        cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
+                    file_type, file_encoding = mimetypes.guess_type(file_name)
+                    if (file_type[:5] == 'video'):
+                        if not cmd_gray:
+                            cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vcodec h264 changed_' + file_name
+                        else:
+                            cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
                     else:
-                        cmd_str = '-y -i ' + file_name + ' -s ' + cmd_rez_width + 'x' + cmd_red_height + ' -vf format=gray -vcodec h264 changed_' + file_name
-
+                        raise Exception('ceva')
                     #print('Preparing to run ffmpef {0}\n\n\n\n\n'.format(cmd_str))
                     start_time = time()
                     convert('ffmpeg {0}'.format(cmd_str))
